@@ -94,6 +94,36 @@ describe("createAsuRequestBuilder", () => {
     assert.equal(capturedBody.diff_packages, true);
   });
 
+  it("includes repository settings in request body", async () => {
+    let capturedBody;
+    globalThis.fetch = (_url, opts) => {
+      capturedBody = JSON.parse(opts.body);
+      return Promise.resolve({
+        status: 200,
+        json: () =>
+          Promise.resolve({ version_number: "23.05.4", bin_dir: "d" }),
+      });
+    };
+
+    const build = createAsuRequestBuilder(
+      makeContext({
+        config: {
+          asu_url: "http://asu.example.com",
+          asu_repositories: { custom: "https://example.org/repo" },
+          asu_repository_keys: ["my-key"],
+        },
+        getCurrentDevice: () => ({ id: "my-router", target: "ramips/mt7621" }),
+      })
+    );
+    build();
+    await new Promise((r) => setTimeout(r, 50));
+
+    assert.deepEqual(capturedBody.repositories, {
+      custom: "https://example.org/repo",
+    });
+    assert.deepEqual(capturedBody.repository_keys, ["my-key"]);
+  });
+
   it("includes client version in request body", async () => {
     let capturedBody;
     globalThis.fetch = (_url, opts) => {

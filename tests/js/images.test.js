@@ -1,6 +1,7 @@
 import "./setup.js";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { mockElement } from "./setup.js";
 import {
   getModelTitles,
   getHelpTextClass,
@@ -8,6 +9,7 @@ import {
   isAnyDeviceSelected,
   commonPrefix,
   getNameDifference,
+  updateImages,
 } from "../../www/js/images.js";
 
 describe("getModelTitles", () => {
@@ -316,5 +318,92 @@ describe("isAnyDeviceSelected", () => {
 
   it("returns true for device with only one property", () => {
     assert.equal(isAnyDeviceSelected({ id: "test" }), true);
+  });
+});
+
+describe("updateImages", () => {
+  it("adds device-specific packages to ASU package prefill", () => {
+    const elements = {
+      "#download-table1": mockElement({ appendChild: () => {} }),
+      "#download-links2": mockElement({ childNodes: [], appendChild: () => {} }),
+      "#download-extras2": mockElement({ childNodes: [], appendChild: () => {} }),
+      "#downloads1 h3": mockElement({
+        classList: { add: () => {}, remove: () => {} },
+      }),
+      "#image-model": mockElement({ tagName: "INPUT", closest: () => mockElement() }),
+      "#image-target": mockElement({ tagName: "INPUT", closest: () => mockElement() }),
+      "#image-version": mockElement({
+        tagName: "INPUT",
+        closest: () => mockElement(),
+      }),
+      "#image-code": mockElement({ tagName: "INPUT", closest: () => mockElement() }),
+      "#image-date": mockElement({ tagName: "INPUT", closest: () => mockElement() }),
+      "#image-folder": mockElement({
+        tagName: "INPUT",
+        closest: () => mockElement(),
+      }),
+      "#image-info": mockElement({ tagName: "A", closest: () => mockElement() }),
+      "#image-link": mockElement({ tagName: "A", closest: () => mockElement() }),
+      "#models": mockElement({ value: "GL.iNet GL-MT3000" }),
+      "#asu": mockElement({ open: true }),
+      "#asu-log": mockElement({ classList: { add: () => {}, remove: () => {} } }),
+      "#asu-buildstatus": mockElement({
+        classList: { add: () => {}, remove: () => {} },
+      }),
+      "#asu-packages": mockElement({ value: "" }),
+      "#notfound": mockElement({ classList: { add: () => {}, remove: () => {} } }),
+      "#images": mockElement({ classList: { add: () => {}, remove: () => {} } }),
+    };
+
+    const originalQs = document._qsImpl;
+    const originalQsa = document._qsaImpl;
+    const originalCreate = document._createImpl;
+
+    document._qsImpl = (selector) => elements[selector] || mockElement();
+    document._qsaImpl = () => [];
+    document._createImpl = (tag) => {
+      if (tag === "template") {
+        return {
+          innerHTML: "",
+          content: {
+            firstChild: mockElement({
+              firstChild: mockElement({ classList: { add: () => {}, remove: () => {} } }),
+            }),
+          },
+        };
+      }
+      return mockElement();
+    };
+
+    const mobj = {
+      id: "glinet,gl-mt3000",
+      target: "ath79/generic",
+      version_number: "23.05.4",
+      version_code: "r12345",
+      titles: [{ title: "GL.iNet GL-MT3000" }],
+      images: [{ type: "sysupgrade", name: "openwrt-sysupgrade.bin", sha256: "abc" }],
+      default_packages: ["base-files"],
+      device_packages: ["kmod-usb3"],
+    };
+
+    updateImages("23.05.4", mobj, {
+      config: {
+        image_urls: { "23.05.4": "https://downloads.openwrt.org/releases/23.05.4" },
+        asu_extra_packages: ["luci-ssl"],
+      },
+      currentDevice: { id: "glinet,gl-mt3000", target: "ath79/generic" },
+      customDevicePackages: {
+        "glinet,gl-mt3000": ["luci-app-wireguard", "wireguard-tools"],
+      },
+    });
+
+    assert.equal(
+      elements["#asu-packages"].value,
+      "base-files kmod-usb3 luci-ssl luci-app-wireguard wireguard-tools"
+    );
+
+    document._qsImpl = originalQs;
+    document._qsaImpl = originalQsa;
+    document._createImpl = originalCreate;
   });
 });
