@@ -124,6 +124,79 @@ describe("createAsuRequestBuilder", () => {
     assert.deepEqual(capturedBody.repository_keys, ["my-key"]);
   });
 
+  it("resolves repository template tags from selected version and target", async () => {
+    let capturedBody;
+    const previousQsImpl = document._qsImpl;
+    document._qsImpl = (selector) =>
+      selector === "#versions" ? { value: "25.12.1" } : previousQsImpl(selector);
+    globalThis.fetch = (_url, opts) => {
+      capturedBody = JSON.parse(opts.body);
+      return Promise.resolve({
+        status: 200,
+        json: () =>
+          Promise.resolve({ version_number: "25.12.1", bin_dir: "d" }),
+      });
+    };
+
+    const build = createAsuRequestBuilder(
+      makeContext({
+        config: {
+          asu_url: "http://asu.example.com",
+          asu_repositories: {
+            custom:
+              "https://buildbot.example.org/packages/{openwrt_series}/{target}/{subtarget}/repo",
+          },
+          asu_repository_keys: ["my-key"],
+        },
+        getCurrentDevice: () => ({ id: "my-router", target: "ath79/generic" }),
+      })
+    );
+    build();
+    await new Promise((r) => setTimeout(r, 50));
+    document._qsImpl = previousQsImpl;
+
+    assert.deepEqual(capturedBody.repositories, {
+      custom:
+        "https://buildbot.example.org/packages/25.12/ath79/generic/repo",
+    });
+    assert.deepEqual(capturedBody.repository_keys, ["my-key"]);
+  });
+
+  it("resolves missing subtarget tags to empty string", async () => {
+    let capturedBody;
+    const previousQsImpl = document._qsImpl;
+    document._qsImpl = (selector) =>
+      selector === "#versions" ? { value: "25.12.1" } : previousQsImpl(selector);
+    globalThis.fetch = (_url, opts) => {
+      capturedBody = JSON.parse(opts.body);
+      return Promise.resolve({
+        status: 200,
+        json: () =>
+          Promise.resolve({ version_number: "25.12.1", bin_dir: "d" }),
+      });
+    };
+
+    const build = createAsuRequestBuilder(
+      makeContext({
+        config: {
+          asu_url: "http://asu.example.com",
+          asu_repositories: {
+            custom:
+              "https://buildbot.example.org/packages/{openwrt_version}/{target}/{subtarget}/repo",
+          },
+        },
+        getCurrentDevice: () => ({ id: "my-router", target: "ath79" }),
+      })
+    );
+    build();
+    await new Promise((r) => setTimeout(r, 50));
+    document._qsImpl = previousQsImpl;
+
+    assert.deepEqual(capturedBody.repositories, {
+      custom: "https://buildbot.example.org/packages/25.12.1/ath79//repo",
+    });
+  });
+
   it("includes client version in request body", async () => {
     let capturedBody;
     globalThis.fetch = (_url, opts) => {

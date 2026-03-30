@@ -22,4 +22,11 @@ var config = {
   // Attended Sysupgrade Server support (optional)
   asu_url: "https://sysupgrade.openwrt.org",
   asu_extra_packages: ["luci", "luci-app-attendedsysupgrade"],
+  // Optional additional ASU repositories:
+  // asu_repositories: {
+  //   freifunk:
+  //     "https://buildbot.weimarnetz.de/builds/brauhaus/packages/{openwrt_series}/{target}/{subtarget}/freifunk_packages/",
+  // },
+  // Template tags: {openwrt_version} (e.g. 25.12.1), {openwrt_series} (e.g. 25.12),
+  // {target} (e.g. ath79), {subtarget} (e.g. generic)
 };

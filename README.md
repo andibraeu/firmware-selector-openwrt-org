@@ -56,6 +56,24 @@ If the option is not available (OpenWrt 18.06 or 19.07.3), apply commit [openwrt
 
 [ASU](https://github.com/openwrt/asu) is a build server that builds OpenWrt images with a given list of packages on request. The firmware-selector can be used as an interface to send these requests and to download the images when finished.
 
+### Additional Repositories with Template Tags
+
+You can configure extra repositories for ASU requests via `asu_repositories` in `www/config.js`.
+Repository URLs support these template tags:
+
+- `{openwrt_version}`: full selected version, e.g. `25.12.1`
+- `{openwrt_series}`: major/minor series, e.g. `25.12`
+- `{target}`: target part from selected device target, e.g. `ath79` from `ath79/generic`
+- `{subtarget}`: subtarget part from selected device target, e.g. `generic` from `ath79/generic`
+
+Example:
+
+```
+asu_repositories: {
+  freifunk: "https://buildbot.weimarnetz.de/builds/brauhaus/packages/{openwrt_series}/{target}/{subtarget}/freifunk_packages/"
+}
+```
+
 ### UCI-Defaults
 
 The Firmware Selector allows to define a script to be placed in the `/etc/uci-defaults/` folder of the OpenWrt image. These scripts are executed once on the first reboot and then deleted. See the [OpenWrt documentation](https://openwrt.org/docs/guide-developer/uci-defaults) on this topic.

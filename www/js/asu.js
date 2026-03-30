@@ -5,6 +5,30 @@ export function createAsuRequestBuilder(context) {
   const { config, progress, ofsVersion, getCurrentDevice, updateImages } =
     context;
 
+  function getOpenwrtSeries(openwrtVersion) {
+    const match = String(openwrtVersion || "").match(/^(\d+\.\d+)/);
+    return match ? match[1] : String(openwrtVersion || "");
+  }
+
+  function resolveAsuRepositories(rawRepositories, currentDevice, openwrtVersion) {
+    const repositories = rawRepositories || {};
+    const [target = "", subtarget = ""] = String(
+      currentDevice?.target || ""
+    ).split("/");
+    const openwrtSeries = getOpenwrtSeries(openwrtVersion);
+
+    return Object.fromEntries(
+      Object.entries(repositories).map(([name, url]) => [
+        name,
+        String(url)
+          .replaceAll("{openwrt_series}", openwrtSeries)
+          .replaceAll("{openwrt_version}", String(openwrtVersion || ""))
+          .replaceAll("{target}", target)
+          .replaceAll("{subtarget}", subtarget),
+      ])
+    );
+  }
+
   function showStatus(message, loading, type) {
     const bs = $("#asu-buildstatus");
     switch (type) {
@@ -47,6 +71,7 @@ export function createAsuRequestBuilder(context) {
       return;
     }
 
+    const selectedVersion = $("#versions").value;
     let requestUrl = `${config.asu_url}/api/v1/build`;
     let body = JSON.stringify({
       profile: currentDevice.id,
@@ -54,10 +79,14 @@ export function createAsuRequestBuilder(context) {
       packages: split($("#asu-packages").value),
       defaults: $("#uci-defaults-content").value,
       version_code: $("#image-code").innerText,
-      version: $("#versions").value,
+      version: selectedVersion,
       diff_packages: true,
       client: "ofs/" + ofsVersion,
-      repositories: config.asu_repositories || {},
+      repositories: resolveAsuRepositories(
+        config.asu_repositories,
+        currentDevice,
+        selectedVersion
+      ),
       repository_keys: config.asu_repository_keys || [],
     });
     let method = "POST";
