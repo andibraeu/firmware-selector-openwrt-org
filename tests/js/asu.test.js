@@ -124,6 +124,82 @@ describe("createAsuRequestBuilder", () => {
     assert.deepEqual(capturedBody.repository_keys, ["my-key"]);
   });
 
+  it("sends empty repositories_mode when asu_repositories_mode is unset", async () => {
+    let capturedBody;
+    globalThis.fetch = (_url, opts) => {
+      capturedBody = JSON.parse(opts.body);
+      return Promise.resolve({
+        status: 200,
+        json: () =>
+          Promise.resolve({ version_number: "23.05.4", bin_dir: "d" }),
+      });
+    };
+
+    const build = createAsuRequestBuilder(
+      makeContext({
+        getCurrentDevice: () => ({ id: "my-router", target: "ramips/mt7621" }),
+      })
+    );
+    build();
+    await new Promise((r) => setTimeout(r, 50));
+
+    assert.equal(capturedBody.repositories_mode, "");
+  });
+
+  it('includes repositories_mode when asu_repositories_mode is "append" or "replace"', async () => {
+    for (const mode of ["append", "replace"]) {
+      let capturedBody;
+      globalThis.fetch = (_url, opts) => {
+        capturedBody = JSON.parse(opts.body);
+        return Promise.resolve({
+          status: 200,
+          json: () =>
+            Promise.resolve({ version_number: "23.05.4", bin_dir: "d" }),
+        });
+      };
+
+      const build = createAsuRequestBuilder(
+        makeContext({
+          config: {
+            asu_url: "http://asu.example.com",
+            asu_repositories_mode: mode,
+          },
+          getCurrentDevice: () => ({ id: "my-router", target: "ramips/mt7621" }),
+        })
+      );
+      build();
+      await new Promise((r) => setTimeout(r, 50));
+
+      assert.equal(capturedBody.repositories_mode, mode);
+    }
+  });
+
+  it("sends empty repositories_mode for invalid asu_repositories_mode", async () => {
+    let capturedBody;
+    globalThis.fetch = (_url, opts) => {
+      capturedBody = JSON.parse(opts.body);
+      return Promise.resolve({
+        status: 200,
+        json: () =>
+          Promise.resolve({ version_number: "23.05.4", bin_dir: "d" }),
+      });
+    };
+
+    const build = createAsuRequestBuilder(
+      makeContext({
+        config: {
+          asu_url: "http://asu.example.com",
+          asu_repositories_mode: "merge",
+        },
+        getCurrentDevice: () => ({ id: "my-router", target: "ramips/mt7621" }),
+      })
+    );
+    build();
+    await new Promise((r) => setTimeout(r, 50));
+
+    assert.equal(capturedBody.repositories_mode, "");
+  });
+
   it("resolves repository template tags from selected version and target", async () => {
     let capturedBody;
     const previousQsImpl = document._qsImpl;

@@ -72,8 +72,10 @@ export function createAsuRequestBuilder(context) {
     }
 
     const selectedVersion = $("#versions").value;
-    let requestUrl = `${config.asu_url}/api/v1/build`;
-    let body = JSON.stringify({
+    const reposMode = config.asu_repositories_mode;
+    const repositories_mode =
+      reposMode === "replace" || reposMode === "append" ? reposMode : "";
+    const buildBody = {
       profile: currentDevice.id,
       target: currentDevice.target,
       packages: split($("#asu-packages").value),
@@ -88,22 +90,19 @@ export function createAsuRequestBuilder(context) {
         selectedVersion
       ),
       repository_keys: config.asu_repository_keys || [],
-    });
-    let method = "POST";
-
-    if (requestHash) {
-      requestUrl += `/${requestHash}`;
-      body = null;
-      method = "GET";
-    }
+      repositories_mode,
+    };
+    const requestUrl =
+      `${config.asu_url}/api/v1/build` +
+      (requestHash ? `/${requestHash}` : "");
 
     fetch(requestUrl, {
       cache: "no-cache",
-      method: method,
+      method: requestHash ? "GET" : "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: body,
+      body: requestHash ? null : JSON.stringify(buildBody),
     })
       .then((response) => {
         switch (response.status) {

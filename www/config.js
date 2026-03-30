@@ -29,4 +29,8 @@ var config = {
   // },
   // Template tags: {openwrt_version} (e.g. 25.12.1), {openwrt_series} (e.g. 25.12),
   // {target} (e.g. ath79), {subtarget} (e.g. generic)
+  // Optional GPG keys for extra repos (sent to ASU as repository_keys):
+  // asu_repository_keys: ["-----BEGIN PGP PUBLIC KEY BLOCK-----\n...\n-----END PGP PUBLIC KEY BLOCK-----"],
+  // How custom repos combine with defaults (sent as repositories_mode; "" if unset — not in upstream ASU main yet):
+  // asu_repositories_mode: "append" | "replace",
 };

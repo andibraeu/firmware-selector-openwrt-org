@@ -74,6 +74,8 @@ asu_repositories: {
 }
 ```
 
+Optional `asu_repositories_mode` in `www/config.js` may be `"append"` or `"replace".
+
 ### UCI-Defaults
 
 The Firmware Selector allows to define a script to be placed in the `/etc/uci-defaults/` folder of the OpenWrt image. These scripts are executed once on the first reboot and then deleted. See the [OpenWrt documentation](https://openwrt.org/docs/guide-developer/uci-defaults) on this topic.
