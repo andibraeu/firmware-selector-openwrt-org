@@ -57,6 +57,8 @@ export function createAsuRequestBuilder(context) {
       version: $("#versions").value,
       diff_packages: true,
       client: "ofs/" + ofsVersion,
+      repositories: config.asu_repositories || {},
+      repository_keys: config.asu_repository_keys || [],
     });
     let method = "POST";
 

@@ -123,7 +123,7 @@ export function isAnyDeviceSelected(currentDevice) {
 }
 
 export function updateImages(version, mobj, context) {
-  const { config, currentDevice } = context;
+  const { config, currentDevice, customDevicePackages } = context;
 
   $$("#download-table1 *").forEach((e) => e.remove());
   $$("#download-links2 *").forEach((e) => e.remove());
@@ -214,9 +214,11 @@ export function updateImages(version, mobj, context) {
       $("#asu").open = false;
       hide("#asu-log");
       hide("#asu-buildstatus");
+      const extraDevicePackages = customDevicePackages[mobj.id] || [];
       $("#asu-packages").value = mobj.default_packages
         .concat(mobj.device_packages)
         .concat(config.asu_extra_packages || [])
+        .concat(extraDevicePackages)
         .join(" ");
     }
 
