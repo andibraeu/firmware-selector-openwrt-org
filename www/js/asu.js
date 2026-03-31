@@ -10,7 +10,11 @@ export function createAsuRequestBuilder(context) {
     return match ? match[1] : String(openwrtVersion || "");
   }
 
-  function resolveAsuRepositories(rawRepositories, currentDevice, openwrtVersion) {
+  function resolveAsuRepositories(
+    rawRepositories,
+    currentDevice,
+    openwrtVersion
+  ) {
     const repositories = rawRepositories || {};
     const [target = "", subtarget = ""] = String(
       currentDevice?.target || ""
@@ -93,8 +97,7 @@ export function createAsuRequestBuilder(context) {
       repositories_mode,
     };
     const requestUrl =
-      `${config.asu_url}/api/v1/build` +
-      (requestHash ? `/${requestHash}` : "");
+      `${config.asu_url}/api/v1/build` + (requestHash ? `/${requestHash}` : "");
 
     fetch(requestUrl, {
       cache: "no-cache",
